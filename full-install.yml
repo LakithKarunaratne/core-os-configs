@@ -1,0 +1,52 @@
+{
+  "ignition": {
+    "version": "3.2.0"
+  },
+  "storage": {
+    "files": [
+      {
+        "filesystem": "root",
+        "path": "/etc/ignition/config.ign",
+        "contents": {
+          "source": "http://example.com/config.ign"
+        },
+        "mode": 420
+      }
+    ],
+    "disks": [
+      {
+        "device": "/dev/sda",
+        "wipeTable": true,
+        "partitions": [
+          {
+            "label": "boot",
+            "number": 1,
+            "sizeMiB": 512,
+            "typeGuid": "C12A7328-F81F-11D2-BA4B-00A0C93EC93B"
+          },
+          {
+            "label": "root",
+            "number": 2,
+            "sizeMiB": 0,
+            "typeGuid": "CA7D7CCB-63ED-4C53-861C-1742536059CC",
+            "filesystem": "btrfs",
+            "options": [
+              "--force",
+              "-L",
+              "root"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "systemd": {
+    "units": [
+      {
+        "name": "install-btrfs.service",
+        "enabled": true,
+        "contents": "[Unit]\nDescription=Install Fedora CoreOS on Btrfs\nAfter=network-online.target\n\n[Service]\nType=oneshot\nExecStart=/usr/sbin/coreos-installer install /dev/sda --ignition /etc/ignition/config.ign\n\n[Install]\nWantedBy=multi-user.target"
+      }
+    ]
+  }
+}
