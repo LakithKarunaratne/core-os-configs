@@ -1,0 +1,113 @@
+storage:
+  disks:
+    - device: /dev/nvme0n1
+      partitions:
+        - label: boot
+          number: 1
+          size: 1GB
+          start: 2048
+          type: vfat
+          # type_guid: 0FC63DAF-8483-4772-8E79-3D69D8477DE4
+        - label: swap
+          number: 2
+          size: 2GB
+          start: 2099200
+          type: swap
+          # type_guid: 0657FD6D-A4AB-43C4-84E5-0933C84B4F4F
+        - label: root
+          number: 3
+          size: 0
+          start: 0
+          type: Btrfs
+          # type_guid: 0FC63DAF-8483-4772-8E79-3D69D8477DE4
+
+passwd:
+  users:
+    - name: admin
+      passwordHash:
+        - $6$ggwp$R6iTIiFNqcXkxIsNbKQUmWZP.OwxObbgm6S.oIBBQOfEKvqFBDOn.2Y.Xr91mVql63oaxvh9NeLM0fSX6t5Mk/
+      ssh_authorized_keys:
+        - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIB8y/rH3HEm/PwxmNz6XqHOyiRqkzVw61adylmtpj1Ap lakithk@probook.local
+    - name: lakithk
+      passwordHash:
+        - $6$ggwp$9lsgVRQ1v6ywtAMmkLI5RTHEVi4P4C4f42mMV/sp0e2NmmOAFgxUSNfQxCQQvpX02JQjAQUdkg2NPbvtJcNKp.
+      ssh_authorized_keys:
+        - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDzM/IFZnI2sFWCDD213WM/HGpp5LTAKFL3ec6zktqo/ lakith@asyncmetric.com
+
+
+systemd:
+  units:
+    - name: ufw.service
+      enabled: true
+      command: start
+      # contents: |
+      #   [Unit]
+      #   Description=Uncomplicated Firewall
+      #   After=network-online.target
+
+      #   [Service]
+      #   Type=simple
+      #   ExecStart=/usr/bin/ufw enable
+
+      #   [Install]
+      #   WantedBy=multi-user.target
+
+    - name: nginx.service
+      enabled: true
+      command: start
+      # contents: |
+      #   [Unit]
+      #   Description=The NGINX HTTP and reverse proxy server
+      #   After=network-online.target
+
+      #   [Service]
+      #   Type=forking
+      #   PIDFile=/run/nginx.pid
+      #   ExecStartPre=/usr/sbin/nginx -t
+      #   ExecStart=/usr/sbin/nginx
+      #   ExecReload=/usr/sbin/nginx -s reload
+      #   ExecStop=/usr/sbin/nginx -s stop
+
+      #   [Install]
+      #   WantedBy=multi-user.target
+
+    - name: portainer.service
+      enabled: true
+      # command: start
+      contents: |
+        [Unit]
+        Description=Portainer
+        Requires=docker.service
+        After=docker.service
+
+        [Service]
+        TimeoutStartSec=0
+        Restart=always
+        ExecStartPre=-/usr/bin/docker rm -f portainer
+        ExecStart=/usr/bin/docker run -p 9000:9000 --name portainer --restart always -v /var/run/docker.sock:/var/run/docker.sock portainer/portainer
+
+        [Install]
+        WantedBy=multi-user.target
+
+  dropins:
+    - name: admin-sudoers.conf
+      contents: |
+        [sudo]
+        # Allow members of group sudo to execute any command
+        %sudo   ALL=(ALL:ALL) ALL
+
+    - name: lakithk-sudoers.conf
+      contents: |
+        [sudo]
+        # Allow members of group sudo to execute any command
+        %sudo   ALL=(ALL:ALL) ALL
+
+desktop:
+  lxde: {}
+
+hostname: asynclab
+
+networkd:
+  units:
+    - name: systemd-networkd.service
+      enabled: true

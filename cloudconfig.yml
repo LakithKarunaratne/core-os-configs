@@ -1,0 +1,56 @@
+#cloud-config
+
+passwd:
+  users:
+    - name: admin
+      ssh_authorized_keys:
+        - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHk0wJiEgRGqG3qkjg2IIFxZdX9Z37vDneBSR0ZvyOvw user@host
+    - name: lakithk
+      ssh_authorized_keys:
+        - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKYkizW8J4SPmNG4a4xvWhngiSzOn8c6cpwU6E/nUgyK user@host
+  groups:
+    - sudo
+
+storage:
+  disks:
+    - device: /dev/nvme0n1
+      wipe_table: true
+      partitions:
+        - label: boot
+          number: 1
+          size: 1GiB
+          type: xfs
+        - label: swap
+          number: 2
+          size: 4GiB
+          type: swap
+        - label: root
+          number: 3
+          size: 20GiB
+          type: xfs
+      filesystems:
+        - name: boot
+          mount:
+            name: /boot
+        - name: root
+          mount:
+            name: /
+
+networkd:
+  units:
+    - name: systemd-networkd.service
+      enabled: true
+
+hostname: asynclab
+
+systemd:
+  units:
+    - name: ufw.service
+      enabled: true
+      command: start
+    - name: nginx.service
+      enabled: true
+      command: start
+    - name: docker.service
+      enabled: true
+      command: start
